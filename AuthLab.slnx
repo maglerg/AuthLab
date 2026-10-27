@@ -3,5 +3,9 @@
     <Build />
     <Deploy />
   </Project>
+  <Project Path="AuthLab.DemoClient/authlab.democlient.esproj">
+    <Build />
+    <Deploy />
+  </Project>
   <Project Path="AuthLab.Provider/AuthLab.Provider.csproj" />
 </Solution>

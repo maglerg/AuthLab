@@ -2,8 +2,8 @@ using AuthLab.Provider.Data;
 using AuthLab.Provider.Models;
 using AuthLab.Provider.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -36,27 +36,40 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AuthLabClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .WithOrigins(
+                "http://localhost:55840",
+                "http://localhost:49757")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy =
-        CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
     options.Events.OnRedirectToLogin = context =>
     {
-        context.Response.StatusCode = 401;
+        var currentUrl =
+            $"{context.Request.Scheme}://{context.Request.Host}" +
+            $"{context.Request.PathBase}{context.Request.Path}" +
+            $"{context.Request.QueryString}";
+
+        var loginUrl = QueryHelpers.AddQueryString(
+            "http://localhost:55840/",
+            "returnUrl",
+            currentUrl);
+
+        context.Response.Redirect(loginUrl);
+
         return Task.CompletedTask;
     };
 
     options.Events.OnRedirectToAccessDenied = context =>
     {
-        context.Response.StatusCode = 403;
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
         return Task.CompletedTask;
     };
 });
@@ -70,9 +83,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
 app.UseCors("AuthLabClient");
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
