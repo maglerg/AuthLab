@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="AuthLab.Client/authlab.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="AuthLab.Provider/AuthLab.Provider.csproj" />
+</Solution>
