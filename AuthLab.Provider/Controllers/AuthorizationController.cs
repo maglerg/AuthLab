@@ -73,7 +73,18 @@ public class AuthorizationController : ControllerBase
 
         return Redirect(callbackUrl);
     }
-
+    [AllowAnonymous]
+    [HttpGet("debug-auth")]
+    public IActionResult DebugAuth()
+    {
+        return Ok(new
+        {
+            IsAuthenticated = User.Identity?.IsAuthenticated,
+            AuthenticationType = User.Identity?.AuthenticationType,
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+            HasCookie = Request.Cookies.Count > 0
+        });
+    }
     [AllowAnonymous]
     [HttpPost("token")]
     public async Task<IActionResult> Token(

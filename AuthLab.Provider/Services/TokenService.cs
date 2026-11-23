@@ -1,9 +1,10 @@
+
 using AuthLab.Provider.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 
 namespace AuthLab.Provider.Services;
 
@@ -20,9 +21,13 @@ public class TokenService
         ApplicationUser user,
         UserManager<ApplicationUser> userManager)
     {
-        var secret = _configuration["Jwt:SigningKey"]
+        var privateKeyPath = _configuration["Jwt:PrivateKeyPath"]
             ?? throw new InvalidOperationException(
-                "JWT signing key is not configured.");
+                "JWT private key path is not configured.");
+
+        var keyId = _configuration["Jwt:KeyId"]
+            ?? throw new InvalidOperationException(
+                "JWT key ID is not configured.");
 
         var issuer = _configuration["Jwt:Issuer"]
             ?? throw new InvalidOperationException(
@@ -32,12 +37,25 @@ public class TokenService
             ?? throw new InvalidOperationException(
                 "JWT audience is not configured.");
 
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(secret));
+        if (!File.Exists(privateKeyPath))
+        {
+            throw new InvalidOperationException(
+                "JWT private key file was not found.");
+        }
+
+        using var rsa = RSA.Create();
+
+        var privateKey = File.ReadAllText(privateKeyPath);
+        rsa.ImportFromPem(privateKey);
+
+        var securityKey = new RsaSecurityKey(rsa)
+        {
+            KeyId = keyId
+        };
 
         var credentials = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256);
+            securityKey,
+            SecurityAlgorithms.RsaSha256);
 
         var roles = await userManager.GetRolesAsync(user);
 
@@ -49,7 +67,8 @@ public class TokenService
         };
 
         claims.AddRange(
-            roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            roles.Select(role =>
+                new Claim(ClaimTypes.Role, role)));
 
         var token = new JwtSecurityToken(
             issuer: issuer,
@@ -57,6 +76,8 @@ public class TokenService
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: credentials);
+
+        token.Header["kid"] = keyId;
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
