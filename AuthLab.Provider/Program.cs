@@ -37,9 +37,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AuthLabClient", policy =>
     {
         policy
-            .WithOrigins(
+                        .WithOrigins(
                 "http://localhost:55840",
-                "http://localhost:49757")
+                "http://localhost:5173",
+                "http://127.0.0.1:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
