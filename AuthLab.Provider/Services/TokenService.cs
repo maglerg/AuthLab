@@ -48,7 +48,9 @@ public class TokenService
         var privateKey = File.ReadAllText(privateKeyPath);
         rsa.ImportFromPem(privateKey);
 
-        var securityKey = new RsaSecurityKey(rsa)
+        var rsaParameters = rsa.ExportParameters(true);
+
+        var securityKey = new RsaSecurityKey(rsaParameters)
         {
             KeyId = keyId
         };

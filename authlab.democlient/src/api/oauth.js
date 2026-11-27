@@ -25,6 +25,7 @@ async function createCodeChallenge(verifier) {
 }
 
 export async function startAuthorization() {
+    console.log("START AUTHORIZATION:", window.location.origin);
     // Генерируем случайный PKCE verifier.
     const randomBytes = crypto.getRandomValues(new Uint8Array(32));
     const verifier = base64UrlEncode(randomBytes);
@@ -38,6 +39,12 @@ export async function startAuthorization() {
     // Сохраняем значения до возвращения из провайдера.
     sessionStorage.setItem("pkce_verifier", verifier);
     sessionStorage.setItem("oauth_state", state);
+
+    console.log("OAuth storage check:", {
+        origin: window.location.origin,
+        stateSaved: !!sessionStorage.getItem("oauth_state"),
+        verifierSaved: !!sessionStorage.getItem("pkce_verifier"),
+    });
 
     const authorizeUrl = new URL(
         "/connect/authorize",
@@ -68,6 +75,12 @@ export async function startAuthorization() {
 export async function exchangeCodeForToken(code, returnedState) {
     const expectedState = sessionStorage.getItem("oauth_state");
     const verifier = sessionStorage.getItem("pkce_verifier");
+
+    console.log("OAuth callback storage check:", {
+        origin: window.location.origin,
+        stateSaved: !!expectedState,
+        verifierSaved: !!verifier,
+    });
 
     if (!expectedState || returnedState !== expectedState) {
         throw new Error("Проверка OAuth state не пройдена.");

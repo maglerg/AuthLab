@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace AuthLab.Provider.Data;
 
@@ -20,6 +19,9 @@ public class AppDbContext
     public DbSet<AuthorizationCode> AuthorizationCodes
         => Set<AuthorizationCode>();
 
+    public DbSet<OAuthRedirectUri> OAuthRedirectUris
+        => Set<OAuthRedirectUri>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -32,6 +34,16 @@ public class AppDbContext
             .HasIndex(c => c.CodeHash)
             .IsUnique();
 
+        builder.Entity<OAuthRedirectUri>()
+            .HasIndex(r => new { r.OAuthClientId, r.RedirectUri })
+            .IsUnique();
+
+        builder.Entity<OAuthRedirectUri>()
+            .HasOne(r => r.OAuthClient)
+            .WithMany(c => c.RedirectUris)
+            .HasForeignKey(r => r.OAuthClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Entity<OAuthClient>()
             .Property(c => c.ClientId)
             .HasMaxLength(100);
@@ -43,5 +55,9 @@ public class AppDbContext
         builder.Entity<AuthorizationCode>()
             .Property(c => c.CodeChallenge)
             .HasMaxLength(128);
+
+        builder.Entity<OAuthRedirectUri>()
+            .Property(r => r.RedirectUri)
+            .HasMaxLength(2048);
     }
 }

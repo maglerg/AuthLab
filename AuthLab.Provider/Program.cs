@@ -31,6 +31,7 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthorizationService>();
+builder.Services.AddScoped<JwksService>();
 
 builder.Services.AddCors(options =>
 {

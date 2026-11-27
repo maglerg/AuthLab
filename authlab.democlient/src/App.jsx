@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
     cleanCallbackUrl,
@@ -22,49 +23,38 @@ export default function App() {
             return;
         }
 
+        // Защита от повторного запуска эффекта в React StrictMode.
         callbackStarted.current = true;
 
+        // Получаем code и state из адресной строки.
         const {
             code,
             state,
             error: oauthError,
         } = getCallbackParameters();
 
-        // Удаляем code и state из адресной строки.
-        cleanCallbackUrl();
-
         if (oauthError) {
-            // Оборачиваем в микротаску, чтобы ESLint не ругался на синхронный setState
-            Promise.resolve().then(() => {
-                setError(`Провайдер вернул ошибку: ${oauthError}`);
-            });
+            setError(`Провайдер вернул ошибку: ${ oauthError }`);
             return;
         }
 
         if (!code || !state) {
-            Promise.resolve().then(() => {
-                setError(
-                    "В callback отсутствует authorization code или state."
-                );
-            });
+            setError(
+                "В callback отсутствует authorization code или state."
+            );
             return;
         }
-
-        let cancelled = false;
 
         async function completeLogin() {
             setLoading(true);
             setError("");
 
             try {
+                // Обмениваем authorization code на access token.
                 const result = await exchangeCodeForToken(
                     code,
                     state
                 );
-
-                if (cancelled) {
-                    return;
-                }
 
                 const accessToken =
                     result.access_token ?? result.accessToken;
@@ -78,27 +68,23 @@ export default function App() {
                     );
                 }
 
+                // Удаляем code и state из адресной строки.
+                cleanCallbackUrl();
+
+                // Сохраняем токен в состоянии React.
                 setToken(accessToken);
             } catch (err) {
-                if (!cancelled) {
-                    setError(
-                        err instanceof Error
-                            ? err.message
-                            : "Не удалось завершить авторизацию."
-                    );
-                }
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : "Не удалось завершить авторизацию."
+                );
             } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
+                setLoading(false);
             }
         }
 
         completeLogin();
-
-        return () => {
-            cancelled = true;
-        };
     }, [isCallback]);
 
     async function handleLogin() {
@@ -107,8 +93,6 @@ export default function App() {
 
         try {
             await startAuthorization();
-
-            // Обычно страница уже перенаправлена на провайдера.
         } catch (err) {
             setError(
                 err instanceof Error
@@ -121,7 +105,6 @@ export default function App() {
     }
 
     function handleLogout() {
-        // Очищаем токен только в состоянии React.
         setToken("");
         setError("");
         setLoading(false);
@@ -173,10 +156,7 @@ export default function App() {
                 )}
 
                 {error && (
-                    <div
-                        className="error"
-                        role="alert"
-                    >
+                    <div className="error" role="alert">
                         {error}
                     </div>
                 )}

@@ -33,10 +33,10 @@ public class AuthorizationService
         string codeChallenge)
     {
         var client = await _db.OAuthClients
-            .SingleOrDefaultAsync(c =>
-                c.ClientId == clientId &&
-                c.RedirectUri == redirectUri &&
-                c.IsActive);
+    .SingleOrDefaultAsync(c =>
+        c.ClientId == clientId &&
+        c.IsActive &&
+        c.RedirectUris.Any(r => r.RedirectUri == redirectUri));
 
         if (client is null)
             return null;
@@ -75,10 +75,10 @@ public class AuthorizationService
             return null;
 
         var client = await _db.OAuthClients
-            .SingleOrDefaultAsync(c =>
-                c.ClientId == request.ClientId &&
-                c.RedirectUri == request.RedirectUri &&
-                c.IsActive);
+    .SingleOrDefaultAsync(c =>
+        c.ClientId == request.ClientId &&
+        c.IsActive &&
+        c.RedirectUris.Any(r => r.RedirectUri == request.RedirectUri));
 
         if (client is null)
             return null;

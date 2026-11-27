@@ -17,7 +17,7 @@ namespace AuthLab.Provider.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0-rc.1.25451.107")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -149,16 +149,34 @@ namespace AuthLab.Provider.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("RedirectUri")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId")
                         .IsUnique();
 
                     b.ToTable("OAuthClients");
+                });
+
+            modelBuilder.Entity("AuthLab.Provider.Models.OAuthRedirectUri", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OAuthClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RedirectUri")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OAuthClientId", "RedirectUri")
+                        .IsUnique();
+
+                    b.ToTable("OAuthRedirectUris");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -291,6 +309,17 @@ namespace AuthLab.Provider.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AuthLab.Provider.Models.OAuthRedirectUri", b =>
+                {
+                    b.HasOne("AuthLab.Provider.Models.OAuthClient", "OAuthClient")
+                        .WithMany("RedirectUris")
+                        .HasForeignKey("OAuthClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OAuthClient");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -340,6 +369,11 @@ namespace AuthLab.Provider.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AuthLab.Provider.Models.OAuthClient", b =>
+                {
+                    b.Navigation("RedirectUris");
                 });
 #pragma warning restore 612, 618
         }

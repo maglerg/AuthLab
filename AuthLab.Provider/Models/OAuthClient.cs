@@ -8,7 +8,9 @@ public class OAuthClient
 
     public string Name { get; set; } = string.Empty;
 
-    public string RedirectUri { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    public ICollection<OAuthRedirectUri> RedirectUris { get; set; }
+        = new List<OAuthRedirectUri>();
 }
